@@ -1,0 +1,49 @@
+# Rosetta enzyme-design constraint file (template).
+#
+# Each CST::BEGIN / CST::END block restrains one interaction. ATOM_MAP 1 and 2
+# name the two partners: up to three atoms each, listed from the contact atom
+# outwards, which also defines the angles and torsions Rosetta can restrain.
+# Partners are given either by 3-letter code (residue3, for ligands and metals)
+# or by 1-letter code (residue1, for amino acids - list several, e.g. "HDE", to
+# let any of them satisfy the constraint).
+#
+# CONSTRAINT lines read: <value> <tolerance> <penalty weight> <periodicity>.
+# Distances are in angstroms, angles and torsions in degrees.
+#
+# Replace the placeholders below and delete the blocks you do not need.
+
+# --- Metal coordination by a histidine -------------------------------------
+CST::BEGIN
+  TEMPLATE::   ATOM_MAP: 1 atom_name: METAL_ATOM_HERE
+  TEMPLATE::   ATOM_MAP: 1 residue3: METAL_RESNAME_HERE
+
+  TEMPLATE::   ATOM_MAP: 2 atom_name: ND1 CG CB
+  TEMPLATE::   ATOM_MAP: 2 residue1: H
+
+  CONSTRAINT:: distanceAB: 2.0 0.5 200 0
+CST::END
+
+# --- Metal coordination by a cysteine --------------------------------------
+CST::BEGIN
+  TEMPLATE::   ATOM_MAP: 1 atom_name: METAL_ATOM_HERE
+  TEMPLATE::   ATOM_MAP: 1 residue3: METAL_RESNAME_HERE
+
+  TEMPLATE::   ATOM_MAP: 2 atom_name: SG CB CA
+  TEMPLATE::   ATOM_MAP: 2 residue1: C
+
+  CONSTRAINT:: distanceAB: 2.0 0.5 200 0
+CST::END
+
+# --- Substrate held by a catalytic residue ---------------------------------
+# Example: a hydrogen bond from a histidine NE2 to a substrate hydroxyl.
+CST::BEGIN
+  TEMPLATE::   ATOM_MAP: 1 atom_name: LIGAND_ATOM1_HERE LIGAND_ATOM2_HERE LIGAND_ATOM3_HERE
+  TEMPLATE::   ATOM_MAP: 1 residue3: LIGAND_RESNAME_HERE
+
+  TEMPLATE::   ATOM_MAP: 2 atom_name: NE2 CD2 CG
+  TEMPLATE::   ATOM_MAP: 2 residue1: H
+
+  CONSTRAINT:: distanceAB: 3.0 0.3 100 0
+  CONSTRAINT:: angle_A:  120.0 15.0 50 360
+  CONSTRAINT:: angle_B:  120.0 15.0 50 360
+CST::END

@@ -1,0 +1,76 @@
+<ROSETTASCRIPTS>
+  <!--
+    Stage 5.3 - active-site redesign. Identical to the docking protocol except
+    that design is switched on, so residues lining the pocket may change
+    identity while the constrained catalytic residues are held fixed.
+    Placeholders are filled in by prepare_run.sh.
+  -->
+  <SCOREFXNS>
+    <ScoreFunction name="cst_score" weights="ref2015_cst.wts"/>
+  </SCOREFXNS>
+
+  <SCORINGGRIDS ligand_chain="LIGAND_CHAIN_HERE" width="20.0">
+    <ClassicGrid grid_name="vdw" weight="1.0"/>
+  </SCORINGGRIDS>
+
+  <TASKOPERATIONS>
+    <DetectProteinLigandInterface name="interface_detect" design="1"
+                                  cut1="6.0" cut2="8.0" cut3="10.0" cut4="12.0"/>
+    <LimitAromaChi2 name="limchi2"/>
+    <SetCatalyticResPackBehavior name="catres_fix" fix_catalytic_aa="1"/>
+  </TASKOPERATIONS>
+
+  <FILTERS>
+    <EnzScore name="allcst" score_type="cstE" scorefxn="cst_score"
+              whole_pose="1" energy_cutoff="2000"/>
+  </FILTERS>
+
+  <MOVERS>
+    <AddOrRemoveMatchCsts name="cstadd" cst_instruction="add_new"/>
+
+    <StartFrom name="start_from" chain="LIGAND_CHAIN_HERE">
+      <Coordinates x="START_X_HERE" y="START_Y_HERE" z="START_Z_HERE"/>
+    </StartFrom>
+
+    <Transform name="predock" chain="LIGAND_CHAIN_HERE" box_size="20"
+               move_distance="10" angle="360" cycles="1000" repeats="3"
+               temperature="5"/>
+
+    <EnzRepackMinimize name="cstopt" cst_opt="1" design="1"
+                       minimize_rb="1" minimize_sc="1" minimize_bb="0"
+                       cycles="1" min_in_stages="0" minimize_lig="0"
+                       rb_min_jumps="4,5"/>
+
+    <EnzRepackMinimize name="design_min" design="1" repack_only="0"
+                       scorefxn_minimize="cst_score" scorefxn_repack="cst_score"
+                       minimize_rb="1" rb_min_jumps="4,5" minimize_sc="1"
+                       minimize_bb="1" cycles="1" minimize_lig="0"
+                       min_in_stages="0" backrub="0"
+                       task_operations="interface_detect,limchi2,catres_fix"/>
+
+    <ParsedProtocol name="design_cycle">
+      <Add mover="predock"/>
+      <Add mover="cstopt"/>
+      <Add mover="design_min"/>
+    </ParsedProtocol>
+
+    <GenericMonteCarlo name="iterative_design" mover_name="design_cycle"
+                       scorefxn_name="cst_score" trials="10" sample_type="low"
+                       temperature="0.6" drift="1"/>
+
+    <EnzRepackMinimize name="final_design" design="1" repack_only="0"
+                       scorefxn_minimize="cst_score" scorefxn_repack="cst_score"
+                       minimize_rb="1" rb_min_jumps="4,5" minimize_sc="1"
+                       minimize_bb="1" cycles="2" minimize_lig="0"
+                       min_in_stages="0" backrub="0"
+                       task_operations="interface_detect,limchi2,catres_fix"/>
+  </MOVERS>
+
+  <PROTOCOLS>
+    <Add mover_name="cstadd"/>
+    <Add mover="start_from"/>
+    <Add mover="iterative_design"/>
+    <Add mover="final_design"/>
+    <Add filter="allcst"/>
+  </PROTOCOLS>
+</ROSETTASCRIPTS>
